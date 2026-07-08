@@ -267,9 +267,12 @@ requirements.txt
 
 Fix : Some keys stay pressed down even though I'm not touching them anymore, so Cozmo moves on his own.
 Fix : Try to fix the lagging camera!
+Fix : No sound from cozmo
+Fix : Get the cubes working again using light and recognition.
+Fix : Behaviors because none of them work
 Refacto : recreate the web ui from zero.
 Feature : Add gamepad support so it's more precise than the keyboard.
-Feature : Run the mobile app's Scratch code editor on a PC, since it's just a basic web page.
+Feature : try to Run the mobile app's Scratch code editor on a PC, since it's just a basic web page.
 
 ## Credits
 
