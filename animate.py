@@ -1,7 +1,4 @@
 import json
-import time
-import cozmo
-
 from flask import Blueprint, request
 
 animate = Blueprint('animate', __name__)
@@ -11,13 +8,13 @@ return_to_pose = False
 animations = ''
 triggers = ''
 behaviors = ''
-action = []
+active_behavior_name = None
 pose = None
+
 
 @animate.route('/toggle_pose', methods=['POST'])
 def toggle_pose():
     global return_to_pose
-    # Toggle for returning to pose after finishing animation
     return_to_pose = not return_to_pose
     print('return_to_pose is set to: ' + str(return_to_pose))
     return str(return_to_pose)
@@ -25,79 +22,61 @@ def toggle_pose():
 
 @animate.route('/play_animation', methods=['POST'])
 def play_animation():
-    # Handling of received animation
     global pose
     animation = json.loads(request.data.decode('utf-8'))
     pose = robot.pose
-    robot.play_anim(animation).wait_for_completed()
-    print('Animation \'' + animation + '\' started')
+    robot.play_anim(animation)
+    robot.wait_for_anim_completed()
+    print("Animation '{}' finished".format(animation))
     check_pose_return()
-
     return 'true'
 
 
 @animate.route('/play_trigger', methods=['POST'])
 def play_trigger():
-    # Handling of received trigger
     global pose
     trigger = json.loads(request.data.decode('utf-8'))
     pose = robot.pose
-    robot.play_anim_trigger(getattr(cozmo.anim.Triggers, trigger)).wait_for_completed()
-    print('Trigger \'' + trigger + '\' started')
+    robot.play_anim_trigger(trigger)
+    robot.wait_for_anim_completed()
+    print("Trigger '{}' finished".format(trigger))
     check_pose_return()
-
     return 'true'
 
 
 @animate.route('/play_behavior', methods=['POST'])
 def play_behavior():
-    # Handling of received behavior
-    global pose
-    global action
+    global pose, active_behavior_name
     behavior = json.loads(request.data.decode('utf-8'))
     pose = robot.pose
-    action = [robot.start_behavior(getattr(cozmo.behavior.BehaviorTypes, behavior)), behavior]
-    print('Behavior \'' + behavior + '\' started')
+    robot.start_behavior(behavior)
+    active_behavior_name = behavior
+    print("Behavior '{}' started".format(behavior))
     return 'true'
 
 
 @animate.route('/stop', methods=['POST'])
 def stop():
-    global action
-    if action is not []:
-        robot.stop_freeplay_behaviors()
-        print('behavior \'' + action[1] + '\' stopped')
-        action = []
+    global active_behavior_name
+    if active_behavior_name:
+        stopped = robot.stop_active_behavior()
+        print("behavior '{}' stopped".format(stopped))
+        active_behavior_name = None
         check_pose_return()
     else:
         robot.abort_all_actions()
-
     return 'false'
 
 
 def check_pose_return():
-    if return_to_pose:
+    if return_to_pose and pose is not None:
         robot.go_to_pose(pose)
         print('Cozmo returning to pose he had before animation started')
 
-def init_animate(_robot):
-    global robot
-    robot = _robot
 
-    global animations
-    global triggers
-    global behaviors
-    for a in robot.conn.anim_names:
-        animations += a + ','
-    animations = animations[:-1]
-    for t in dir(cozmo.anim.Triggers):
-        if '__' not in t:
-            triggers += t + ','
-    triggers = triggers[:-1]
-    for b in dir(cozmo.behavior.BehaviorTypes):
-        if '__' not in b:
-            behaviors += b + ','
-    behaviors = behaviors[:-1]
-
-    return [animations, triggers, behaviors]
-
+def init_animate(session):
+    global robot, animations, triggers, behaviors
+    robot = session
+    lists = session.get_animation_lists()
+    animations, triggers, behaviors = lists
+    return lists

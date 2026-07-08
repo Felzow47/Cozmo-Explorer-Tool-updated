@@ -1,5 +1,5 @@
 init_websocket = function() {
-    socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+    socket = io();
 
     socket.on('my_response', function (msg) {
         console.log(msg.data);

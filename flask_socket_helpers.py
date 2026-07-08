@@ -59,10 +59,12 @@ def run_flask(socketio, app, host_ip='0.0.0.0', host_port=5000, enable_flask_log
     if open_page:
         # we add a delay (dispatched in another thread) to open the page so that the flask webserver is open
         # before the webpage requests any data
-        _delayed_open_web_browser("http://" + host_ip + ":" + str(host_port), delay=open_page_delay)
+        _delayed_open_web_browser("http://127.0.0.1:" + str(host_port), delay=open_page_delay)
     # print('Host IP: ' + str(socket.gethostbyname(socket.gethostname())) + ':' + str(host_port))
     if socketio:
-        socketio.run(app, host=host_ip, port=host_port)
+        # flask-socketio disables Werkzeug by default on recent versions.
+        # This project is a local/dev tool: explicitly allow it.
+        socketio.run(app, host=host_ip, port=host_port, allow_unsafe_werkzeug=True)
     else:
         app.run(host=host_ip, port=host_port)
 

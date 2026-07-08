@@ -1,0 +1,5 @@
+flask>=2.0
+flask-socketio>=5.0
+Pillow>=6.0
+pycozmo>=0.8.0
+standard-chunk>=3.13.0
